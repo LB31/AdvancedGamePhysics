@@ -11,7 +11,7 @@ float offsetGround;
 
 
 void setup() {
-  size(600, 300);
+  size(1000 , 400);
   background(255);
   centimeterInPixel = width / 160;
   offsetGround = centimeterInPixel * 5;
