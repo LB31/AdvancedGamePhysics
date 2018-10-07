@@ -1,38 +1,102 @@
 /*
 Leonid Barsht
-s0553363
-04.10.2018
-*/
+ s0553363
+ 04.10.2018
+ */
 
 // Stell dar, wie viele Pixel = 1 Centimeter
 float centimeterInPixel;
 // Der Abstand des Bodens vom unteren Bildschirmrand
 float offsetGround;
-
+// Gewünschte Framerate
+int frameRate = 60;
+// Gesamte Breite in cm → 1,2m + L+R Offset
+float wholeWith = 160;
+// Spielfeld Breite in cm
+float fieldWidth = 120;
+// Länge des Offsets links und rechts in cm
+float LROffset = 20;
+// Spielball Durchmesser in cm
+float targetBallWidth = 3.2;
+// Seitenlänge der Dreiecke in cm
+float lengthTriangle = 4.0;
+// Planke Länge in cm
+float plankLength = 25;
 
 void setup() {
-  size(1000 , 400);
+  fullScreen();
+  //size(1000, 400);
   background(255);
-  centimeterInPixel = width / 160;
-  offsetGround = centimeterInPixel * 5;
+  frameRate(frameRate);
+  smooth();
+  centimeterInPixel = width / wholeWith; 
+  offsetGround = centimeterInPixel * 5; // 5cm Abstand
   print(centimeterInPixel);
 }
 
 
-
-//translate(140, 0);
-
 // Draw - is the game loop
-void draw(){
-  
-stroke(133,102,0);
-
-line(0,height - offsetGround,centimeterInPixel*160,height - offsetGround);
-for(int i = 0; i < width; i+=2){
-line(i,height - offsetGround,i-2, height);  
+void draw() {
+  drawPlayField();
 }
 
-// Draw white point
-stroke(100);
-point(100, 100);
+
+void drawPlayField() {
+  // Boden Position
+  float groundPosition = height - offsetGround;
+  // Boden Dicke
+  int groundThickness = 2;
+
+  // Skalierte Werte
+  float ballWidthNormed = targetBallWidth * centimeterInPixel;
+  float fieldWidthNormed = fieldWidth * centimeterInPixel;
+  float LROffsetNormed = LROffset * centimeterInPixel;
+  float lengthTriangleNormed = lengthTriangle * centimeterInPixel;
+  float plankLengthNormedHalf = (plankLength * centimeterInPixel) / 2;
+
+  // Boden vom Spielfeld
+  stroke(133, 102, 0); 
+  strokeWeight(groundThickness);
+  line(0, groundPosition + groundThickness, width, groundPosition + groundThickness);
+  strokeWeight(1);
+  for (float i = centimeterInPixel; i <= width; i+=centimeterInPixel) {
+    line(i, groundPosition + groundThickness, i-centimeterInPixel, height);
+  }
+
+  // Roter Ball in der Mitte
+  fill(250, 131, 100);
+  ellipse(width / (float)2, groundPosition - ballWidthNormed / 2, ballWidthNormed, ballWidthNormed);
+
+  // Dreiecke
+  fill(100, 160, 215);
+  stroke(0); 
+  float triangleHeight = (lengthTriangleNormed / 2) * sqrt(3);
+  // Dreieck links
+  triangle(LROffsetNormed - lengthTriangleNormed / 2, groundPosition, LROffsetNormed, groundPosition - triangleHeight, LROffsetNormed + lengthTriangleNormed / 2, groundPosition);
+  // Dreieck rechts
+  triangle(LROffsetNormed + fieldWidthNormed - lengthTriangleNormed / 2, groundPosition, LROffsetNormed + fieldWidthNormed, groundPosition - triangleHeight, LROffsetNormed + fieldWidthNormed + lengthTriangleNormed / 2, groundPosition);
+
+  // Planken
+  float plankThinkness = 4;
+  // Beim Verändern dieses Wertes wird die Planke gebogen
+  float plankBend = 1.8;
+  noFill();
+  stroke(100, 160, 215);
+  strokeWeight(plankThinkness);
+  // Planke links
+  beginShape();
+  // Start- und Endpunkt müssen aus Gründen doppelt vorkommen
+  curveVertex(LROffsetNormed - plankLengthNormedHalf,groundPosition - plankThinkness - lengthTriangleNormed * plankBend);
+  curveVertex(LROffsetNormed - plankLengthNormedHalf,groundPosition - plankThinkness - lengthTriangleNormed * plankBend); // Startpunkt
+  curveVertex(LROffsetNormed,groundPosition - triangleHeight - plankThinkness); // Mittelpunkt
+  curveVertex(LROffsetNormed + plankLengthNormedHalf,groundPosition); // Endpunkt
+  curveVertex(LROffsetNormed + plankLengthNormedHalf,groundPosition);
+  endShape();
+  // Planke rechts
+
+
+  // Draw point
+  stroke(#ff0000);
+  strokeWeight(5);
+  point(LROffsetNormed, groundPosition);
 }

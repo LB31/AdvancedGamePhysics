@@ -3,18 +3,41 @@
 //  // keine Umrandung
 //  noStroke();
 //  // anti-alising
-//  smooth();
+  smooth();
 //  background(#dfdfdf);
 //}
 
 //void draw() {
   
   
-  curve(100,300,100,100,200,100,200,300);
+  // Bezier Curve
+  noFill();
+  stroke(#0000FF);
+  strokeWeight(3);
+  bezier(100,50,180,20,50,200,300,250);
+  // Visualisierung control points
+  stroke(0);
+  line(100,50,180,20);
+  line(50,200,300,250);
   
+  //noFill();
+  //beginShape();
+  //// Start- und Endpunkt müssen aus Gründen doppelt vorkommen
+  //curveVertex(200,100);
+  //curveVertex(200,100);
+  //curveVertex(400,200);
+  //curveVertex(600,300);
+  //curveVertex(800,100);
+  //curveVertex(800,100);
+  //endShape();
+
+
   
+  //noFill();
+  //curveTightness(-2);
+  //curve(300,100,100,100,200,100,0,0);
   
-  
+
   //beginShape();
   //vertex(20,50);
   //vertex(100,150);
