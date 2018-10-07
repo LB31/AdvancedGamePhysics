@@ -26,7 +26,7 @@ float plankLength = 25;
 void setup() {
   fullScreen();
   //size(1000, 400);
-  background(255);
+  background(#dfdfdf);
   frameRate(frameRate);
   smooth();
   centimeterInPixel = width / wholeWith; 
@@ -78,21 +78,30 @@ void drawPlayField() {
 
   // Planken
   float plankThinkness = 4;
-  // Beim Verändern dieses Wertes wird die Planke gebogen
-  float plankBend = 1.8;
-  noFill();
+  // Beim Verändern dieser Werte wird die Planke gebogen
+  float plankBendLeft = 1.8;
+  float plankBendRight = 1.8;
+
   stroke(100, 160, 215);
   strokeWeight(plankThinkness);
   // Planke links
   beginShape();
   // Start- und Endpunkt müssen aus Gründen doppelt vorkommen
-  curveVertex(LROffsetNormed - plankLengthNormedHalf,groundPosition - plankThinkness - lengthTriangleNormed * plankBend);
-  curveVertex(LROffsetNormed - plankLengthNormedHalf,groundPosition - plankThinkness - lengthTriangleNormed * plankBend); // Startpunkt
-  curveVertex(LROffsetNormed,groundPosition - triangleHeight - plankThinkness); // Mittelpunkt
-  curveVertex(LROffsetNormed + plankLengthNormedHalf,groundPosition); // Endpunkt
-  curveVertex(LROffsetNormed + plankLengthNormedHalf,groundPosition);
+  curveVertex(LROffsetNormed - plankLengthNormedHalf, groundPosition - plankThinkness - lengthTriangleNormed * plankBendLeft);
+  curveVertex(LROffsetNormed - plankLengthNormedHalf, groundPosition - plankThinkness - lengthTriangleNormed * plankBendLeft); // Startpunkt
+  curveVertex(LROffsetNormed, groundPosition - triangleHeight - plankThinkness); // Mittelpunkt
+  curveVertex(LROffsetNormed + plankLengthNormedHalf, groundPosition); // Endpunkt
+  curveVertex(LROffsetNormed + plankLengthNormedHalf, groundPosition);
   endShape();
   // Planke rechts
+  beginShape();
+  // Start- und Endpunkt müssen aus Gründen doppelt vorkommen
+  curveVertex(LROffsetNormed + fieldWidthNormed + plankLengthNormedHalf, groundPosition - plankThinkness - lengthTriangleNormed * plankBendRight);
+  curveVertex(LROffsetNormed + fieldWidthNormed + plankLengthNormedHalf, groundPosition - plankThinkness - lengthTriangleNormed * plankBendRight); // Startpunkt
+  curveVertex(LROffsetNormed + fieldWidthNormed, groundPosition - triangleHeight - plankThinkness); // Mittelpunkt
+  curveVertex(LROffsetNormed + fieldWidthNormed - plankLengthNormedHalf, groundPosition); // Endpunkt
+  curveVertex(LROffsetNormed + fieldWidthNormed - plankLengthNormedHalf, groundPosition);
+  endShape();
 
 
   // Draw point
