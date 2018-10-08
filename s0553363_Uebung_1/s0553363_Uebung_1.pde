@@ -22,6 +22,9 @@ float targetBallWidth = 3.2;
 float lengthTriangle = 4.0;
 // Planke Länge in cm
 float plankLength = 25;
+// Punktestand der Spieler
+int pointsLeft = 0;
+int pointsRight = 0;
 
 void setup() {
   //fullScreen();
@@ -37,18 +40,19 @@ void setup() {
 // Draw - is the game loop
 void draw() {
   drawPlayField();
+  
 }
 
 
 void drawPlayField() {
-  int pointsLeft = 0;
-  int pointsRight = 0;
-  int textSize = 5;
-  
+  background(255);
+  int textSize = 4;
+  float textWidth = textWidth("Treffer " + pointsLeft + ":" + pointsRight);
   // Punktestand
   fill(0);
   textSize(centimeterInPixel * textSize);
-  text("Treffer" + pointsLeft + ":" + pointsRight, width / (float)2 - (centimeterInPixel * textSize), height / 3);
+
+  text("Treffer " + pointsLeft + ":" + pointsRight, width / 2.0f - textWidth, height / 3);
   
   // Boden Position
   float groundPosition = height - offsetGround;
@@ -141,7 +145,7 @@ void drawPlayField() {
   float plusB = (groundPosition - triangleHeight - plankThinkness) - gradientPlankLeft * LROffsetNormed;
   
   /* TODO orthogonale Funktion berechnen
-   * Außerdem ist bei allem Folgendem etwas Refactoring nötig */
+   * Außerdem ist bei allem Folgendem Refactoring nötig */
    
   // Ballhalterungen
   fill(100, 160, 215);
@@ -178,6 +182,10 @@ void drawPlayField() {
   // rechts
   ellipse(x12-2, y32-3, ballWidthNormed, ballWidthNormed);
 
-
+  // Text in Bällen
+  fill(#0000FF);
+  textSize(centimeterInPixel * textSize / 2);
+  text("L", x1-2, y3+1);
+  text("R", x12-6, y32+1);
 
 }
