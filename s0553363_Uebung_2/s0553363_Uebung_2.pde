@@ -4,18 +4,18 @@
  * 04.10.2018
  r*/
 
-float meterInPixel; // Stell dar, wie viele Pixel = 1 Centimeter
+float meterInPixel; // Stell dar, wie viele Pixel = 1 Meter
 float offsetGround; // Der Abstand des Bodens vom unteren Bildschirmrand
 int frameRate = 60; // Gewünschte Framerate
 float deltaT = 1 / (float)frameRate;
 float t = 0;
 float speed = 500 / 60f / 60f; // 500m pro h auf s runtergerechnet
-float wholeWidth = 1.60; // Gesamte Breite in cm → 1,2m + L+R Offset
-float fieldWidth = 1.20; // Spielfeld Breite in cm
-float LROffset = 0.20; // Länge des Offsets links und rechts in cm
-float targetBallWidth = 0.032; // Spielball Durchmesser in cm
-float lengthTriangle = 0.04; // Seitenlänge der Dreiecke in cm
-float plankLength = 0.25; // Planke Länge in cm
+float wholeWidth = 1.60; // Gesamte Breite in m → 1,2m + L+R Offset
+float fieldWidth = 1.20; // Spielfeld Breite in m
+float LROffset = 0.20; // Länge des Offsets links und rechts in m
+float targetBallWidth = 0.032; // Spielball Durchmesser in m
+float lengthTriangle = 0.04; // Seitenlänge der Dreiecke in m
+float plankLength = 0.25; // Planke Länge in m
 // Punktestand der Spieler
 int pointsLeft = 0;
 int pointsRight = 0;
