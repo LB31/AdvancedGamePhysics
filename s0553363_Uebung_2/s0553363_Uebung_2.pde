@@ -111,7 +111,7 @@ void drawPlayField() {
   noFill();
   float plankThinkness = 4;
   // Beim Verändern dieser Werte wird die Planke gebogen
-  float plankBendLeft = 1.4;
+  float plankBendLeft = 1.8;
   float plankBendRight = 1.8;
 
 
@@ -126,9 +126,6 @@ void drawPlayField() {
   curveVertex(-fieldWidthNormed / 2 + plankLengthNormedHalf, groundThickness); // Endpunkt
   curveVertex(-fieldWidthNormed / 2 + plankLengthNormedHalf, groundThickness);
   endShape();
-  
-
-  
   // Planke rechts
   beginShape();
   // Start- und Endpunkt müssen doppelt vorkommen
@@ -139,18 +136,25 @@ void drawPlayField() {
   curveVertex(fieldWidthNormed / 2 - plankLengthNormedHalf, groundThickness);
   endShape();
   
-  popMatrix(); // TODO wo anders hin machen
+
 
   /* Im folgenden Stelle ich eine lineare Gleichung zwischen dem Mittelpunkt der Planke und deren oberen Punkt auf
    * Mit deren Hilfe lassen sich auf dieser versetzt dynamisch Elemente platzieren
    * Die Dynamik soll voraussichtlich auch beim Biegen der Planke bestehen */
+   
   // Steigung der Planke m
-  float gradientPlankLeft = ((groundPosition - triangleHeight - plankThinkness) - (groundPosition - plankThinkness - lengthTriangleNormed * plankBendLeft)) / (LROffsetNormed - (LROffsetNormed - plankLengthNormedHalf));
-  // TODO folgende Variable und plusB umschreiben
-  float gradientPlankRight = gradientPlankLeft * -1;
+  float gradientPlankLeft = ((groundThickness + triangleHeight + plankThinkness) - (groundThickness + plankThinkness + lengthTriangleNormed * plankBendLeft)) / //<>//
+  ((-fieldWidthNormed / 2) - (-fieldWidthNormed / 2 - plankLengthNormedHalf));
+  float gradientPlankRight = ((groundThickness + plankThinkness + lengthTriangleNormed * plankBendRight) - (groundThickness + triangleHeight + plankThinkness)) /
+  ((fieldWidthNormed / 2 + plankLengthNormedHalf) - fieldWidthNormed / 2);
   // +b in der linearen Gleichung → y - m * x = b
-  float plusB = (groundPosition - triangleHeight - plankThinkness) - gradientPlankLeft * LROffsetNormed;
+  float plusBLeft = (groundThickness + triangleHeight + plankThinkness) - gradientPlankLeft * -fieldWidthNormed / 2;
+  float plusBRight = (groundThickness + triangleHeight + plankThinkness) - gradientPlankRight * fieldWidthNormed / 2;
 
+
+
+  
+  
   /* TODO orthogonale Funktion berechnen
    * Außerdem ist bei allem Folgendem Refactoring nötig */
 
@@ -161,34 +165,43 @@ void drawPlayField() {
   float triangleLongSideLength = 0.04 * meterInPixel;
 
   // links
-  float x1 = LROffsetNormed - plankLengthNormedHalf + triangleLongSideLength;
-  float y1 = gradientPlankLeft * x1 + plusB;
-  float x2 = LROffsetNormed - plankLengthNormedHalf + triangleLongSideLength * 2;
-  float y2 = gradientPlankLeft * x2 + plusB;
-  float x3 = LROffsetNormed - plankLengthNormedHalf + triangleLongSideLength * 1.7;
-  float y3 = gradientPlankLeft * x3 + plusB - triangleShortSideLength;
+  float x1 = -fieldWidthNormed / 2 - plankLengthNormedHalf + triangleLongSideLength; // check
+  float y1 = gradientPlankLeft * x1 + plusBLeft;
+  float x2 = -fieldWidthNormed / 2 - plankLengthNormedHalf + triangleLongSideLength * 2;
+  float y2 = gradientPlankLeft * x2 + plusBLeft;
+  // Spitze
+  float x3 = -fieldWidthNormed / 2 - plankLengthNormedHalf + triangleLongSideLength * 1.7;
+  float y3 = gradientPlankLeft * x3 + plusBLeft + triangleShortSideLength;
   triangle(x1, y1, x2, y2, x3, y3);
+  
 
-  plusB = (groundPosition - triangleHeight - plankThinkness) - gradientPlankRight * (LROffsetNormed + fieldWidthNormed);
+
   // rechts
-  float x12 = LROffsetNormed + fieldWidthNormed + plankLengthNormedHalf - triangleLongSideLength;
-  float y12 = gradientPlankRight * x12 + plusB;
-  float x22 = LROffsetNormed + fieldWidthNormed + plankLengthNormedHalf - triangleLongSideLength * 2;
-  float y22 = gradientPlankRight * x22 + plusB;
-  float x32 = LROffsetNormed + fieldWidthNormed + plankLengthNormedHalf - triangleLongSideLength * 1.7;
-  float y32 = gradientPlankRight * x32 + plusB - triangleShortSideLength;
+  float x12 = fieldWidthNormed / 2 + plankLengthNormedHalf - triangleLongSideLength;
+  float y12 = gradientPlankRight * x12 + plusBRight;
+  float x22 = fieldWidthNormed / 2 + plankLengthNormedHalf - triangleLongSideLength * 2;
+  float y22 = gradientPlankRight * x22 + plusBRight;
+  // Spitze
+  float x32 = fieldWidthNormed / 2 + plankLengthNormedHalf - triangleLongSideLength * 1.7;
+  float y32 = gradientPlankRight * x32 + plusBRight + triangleShortSideLength;
   triangle(x12, y12, x22, y22, x32, y32);
 
 
+  
   // Geschützbälle
   fill(#DFDFDF);
   stroke(0);
   strokeWeight(1);
-  // links
-  ellipse(x1+2, y3-3, ballWidthNormed, ballWidthNormed);
-  // rechts
-  ellipse(x12-2, y32-3, ballWidthNormed, ballWidthNormed);
+  float OffsetY = 13;
 
+  // links
+  ellipse(x1, y1+OffsetY, ballWidthNormed, ballWidthNormed);
+  // rechts
+  ellipse(x12, y12+OffsetY, ballWidthNormed, ballWidthNormed);
+
+
+  popMatrix(); // TODO wo anders hin machen
+  
   // Text in Bällen
   fill(#0000FF);
   textSize(meterInPixel * textSize / 2);
