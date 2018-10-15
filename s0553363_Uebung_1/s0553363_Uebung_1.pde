@@ -1,8 +1,8 @@
-/* //<>// //<>//
-Leonid Barsht
- s0553363
- 04.10.2018
- */
+/* //<>//
+* Leonid Barsht
+* s0553363
+* 04.10.2018 */
+ 
 
 // Stell dar, wie viele Pixel = 1 Centimeter
 float centimeterInPixel;

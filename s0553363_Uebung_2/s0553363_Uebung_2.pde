@@ -9,11 +9,11 @@ float offsetGround; // Der Abstand des Bodens vom unteren Bildschirmrand
 int frameRate = 60; // Gewünschte Framerate
 // Zeit
 float deltaT = 1 / (float)frameRate;
-float t = 0;
-float timeScale = 500; // < 1 = langsamer; > 1 = schneller
-float deltaTtimeLapse = timeScale * deltaT;
-float speed = 500 / 60f / 60f; // 500m pro h auf s runtergerechnet
-
+float timeScale = 1000; // < 1 = langsamer; > 1 = schneller
+float deltaTtimeLapse = timeScale * deltaT; // Zeitraffer
+float speed = 500 / 60f / 60f; // 0.5 km/h auf Sekunden runtergerechnet
+float t = 0; // bereits vergangene Zeit
+// Maße
 float wholeWidth = 1.60; // Gesamte Breite in m → 1,2m + L+R Offset
 float fieldWidth = 1.20; // Spielfeld Breite in m
 float LROffset = 0.20; // Länge des Offsets links und rechts in m
@@ -26,6 +26,10 @@ int pointsRight = 0;
 // Positionen der Ziellinien
 float leftGoalX = Float.MAX_VALUE;
 float rightGoalX = Float.MAX_VALUE;
+// Bewegung roter Ball
+float movement = 0; // Für den in jedem Frame berechneten X-Wert des roten Balls verantwortlich 
+float startPointBall = 0; // Start Position des roten Balls
+boolean movingDirection = false; // false = right; true = left
 
 void setup() {
   //fullScreen();
@@ -34,7 +38,7 @@ void setup() {
   frameRate(frameRate);
   smooth();
   meterInPixel = width / wholeWidth; 
-  offsetGround = meterInPixel * 0.05; // 5cm Abstand
+  offsetGround = normValue(0.05); // 5cm Abstand
 }
 
 
@@ -44,6 +48,7 @@ void draw() {
   drawPlayField();
 }
 
+// Wandelt den übergebenen Wert entsprechend des Maßstabs um
 float normValue(float val) {
   float normedValue = val * meterInPixel;
   return normedValue;
@@ -55,19 +60,19 @@ void drawPlayField() {
   float textWidth = textWidth("Treffer " + pointsLeft + ":" + pointsRight);
   // Punktestand
   fill(0);
-  textSize(meterInPixel * textSize);
+  textSize(normValue(textSize));
   text("Treffer " + pointsLeft + ":" + pointsRight, width / 2.0f - textWidth, height / 3);
 
   float groundPosition = height - offsetGround; // Boden Position
   int groundThickness = 2; // Boden Dicke
 
   // Skalierte Werte
-  float ballWidthNormed = targetBallWidth * meterInPixel;
-  float fieldWidthNormed = fieldWidth * meterInPixel;
-  float LROffsetNormed = LROffset * meterInPixel;
-  float lengthTriangleNormed = lengthTriangle * meterInPixel;
-  float plankLengthNormedHalf = (plankLength * meterInPixel) / 2;
-  float wholeWidthNormed = wholeWidth * meterInPixel;
+  float ballWidthNormed = normValue(targetBallWidth);
+  float fieldWidthNormed = normValue(fieldWidth);
+  float LROffsetNormed = normValue(LROffset);
+  float lengthTriangleNormed = normValue(lengthTriangle);
+  float plankLengthNormedHalf = normValue(plankLength) / 2f;
+  float wholeWidthNormed = normValue(wholeWidth);
 
   pushMatrix();
   translate(width / 2, groundPosition); // Setzt das Koordinatensystem in die Mitte unter den roten Ball
@@ -83,16 +88,25 @@ void drawPlayField() {
   }
   
   
+  /* Bei der Aufgabenstellung war mir leider nicht klar, ob der Ball nun permanent hin und her
+  * rollen, oder ob dieser beim Erreichen des ersten Ziels anhalten soll.
+  * Aktuell rollt dieser hin und her. Würde ich diesen anhalten wollen, könnte ich z.B.
+  * die Variable speed in der folgenden Bedigung auf 0 setzen */
   leftGoalX = -LROffsetNormed*2 - ballWidthNormed/2;
   rightGoalX = LROffsetNormed*2 + ballWidthNormed/2;
-  float movement = 0 + t * speed;
-  if( movement <= leftGoalX || movement >= rightGoalX){
-    speed *= -1;
-    println(leftGoalX);
-    println(rightGoalX);
-    println(movement);
-    
+  movement = startPointBall + t * speed;
+  if( movement <= leftGoalX || movement >= rightGoalX){ // Wenn eine der roten Linien erreicht wurde
+      t = 0;
+      speed *= -1;
+    if(movingDirection){
+      startPointBall = leftGoalX; // Startposition auf aktuelle Position ändern
+      movingDirection = !movingDirection; // Richtung umdrehen
+    }else{
+      startPointBall = rightGoalX;
+      movingDirection = !movingDirection;
+    }
   }
+  
   // Roter Ball in der Mitte
   fill(250, 131, 100);
   ellipse(movement, ballWidthNormed / 2 + groundThickness, ballWidthNormed, ballWidthNormed);
@@ -101,12 +115,8 @@ void drawPlayField() {
   // Ziellinien
   stroke(#ff0000);
   strokeWeight(5);
-
-  
-
   // links
   line(-LROffsetNormed*2, -groundThickness, -LROffsetNormed*2 - ballWidthNormed, -groundThickness);
-  
   // rechts
   line(LROffsetNormed*2, -groundThickness, LROffsetNormed*2 + ballWidthNormed, -groundThickness);
 
@@ -129,7 +139,6 @@ void drawPlayField() {
   // Beim Verändern dieser Werte wird die Planke gebogen
   float plankBendLeft = 1.8;
   float plankBendRight = 1.8;
-
 
   stroke(100, 160, 215);
   strokeWeight(plankThinkness);
@@ -169,20 +178,16 @@ void drawPlayField() {
 
 
 
-
-
-  /* TODO orthogonale Funktion berechnen
-   * Außerdem ist bei allem Folgendem Refactoring nötig */
-
-  // Ballhalterungen
+  // Ballhalterungen (Dreiecke auf den Planken)
   fill(100, 160, 215);
   noStroke();
-  float triangleShortSideLength = 0.025 * meterInPixel;
-  float triangleLongSideLength = 0.04 * meterInPixel;
+  float triangleShortSideLength = normValue(0.025);
+  float triangleLongSideLength = normValue(0.04);
 
   // links
   float x1 = -fieldWidthNormed / 2 - plankLengthNormedHalf + triangleLongSideLength; // check
   float y1 = gradientPlankLeft * x1 + plusBLeft;
+  // rechts
   float x2 = -fieldWidthNormed / 2 - plankLengthNormedHalf + triangleLongSideLength * 2;
   float y2 = gradientPlankLeft * x2 + plusBLeft;
   // Spitze
@@ -195,6 +200,7 @@ void drawPlayField() {
   // rechts
   float x12 = fieldWidthNormed / 2 + plankLengthNormedHalf - triangleLongSideLength;
   float y12 = gradientPlankRight * x12 + plusBRight;
+  // links
   float x22 = fieldWidthNormed / 2 + plankLengthNormedHalf - triangleLongSideLength * 2;
   float y22 = gradientPlankRight * x22 + plusBRight;
   // Spitze
@@ -219,9 +225,10 @@ void drawPlayField() {
   fill(#0000FF);
   float textOffsetX = 4;
   float textOffsetY = 8;
-  textSize(meterInPixel * textSize / 2);
+  textSize(normValue(textSize) / 2f);
   text("L", x1 - textOffsetX, (y1 + textOffsetY) * - 1);
   text("R", x12 - textOffsetX, (y12 + textOffsetY) * -1);
 
-  popMatrix(); // TODO wo anders hin machen
+
+  popMatrix(); 
 }
