@@ -1,15 +1,19 @@
-/*  //<>//
+/*  //<>// //<>//
  * Leonid Barsht
  * s0553363
  * 04.10.2018
- r*/
+ */
 
-float meterInPixel; // Stell dar, wie viele Pixel = 1 Meter
+float meterInPixel; // Stell dar, wie viele Pixel = 1 Meter; Maßstab M
 float offsetGround; // Der Abstand des Bodens vom unteren Bildschirmrand
 int frameRate = 60; // Gewünschte Framerate
+// Zeit
 float deltaT = 1 / (float)frameRate;
 float t = 0;
+float timeScale = 500; // < 1 = langsamer; > 1 = schneller
+float deltaTtimeLapse = timeScale * deltaT;
 float speed = 500 / 60f / 60f; // 500m pro h auf s runtergerechnet
+
 float wholeWidth = 1.60; // Gesamte Breite in m → 1,2m + L+R Offset
 float fieldWidth = 1.20; // Spielfeld Breite in m
 float LROffset = 0.20; // Länge des Offsets links und rechts in m
@@ -19,6 +23,9 @@ float plankLength = 0.25; // Planke Länge in m
 // Punktestand der Spieler
 int pointsLeft = 0;
 int pointsRight = 0;
+// Positionen der Ziellinien
+float leftGoalX = Float.MAX_VALUE;
+float rightGoalX = Float.MAX_VALUE;
 
 void setup() {
   //fullScreen();
@@ -33,7 +40,7 @@ void setup() {
 
 // Draw - is the game loop
 void draw() {
-  t += deltaT;
+  t += deltaTtimeLapse;
   drawPlayField();
 }
 
@@ -74,23 +81,34 @@ void drawPlayField() {
   for (float i = meterInPixel / 100; i <= width; i+=meterInPixel/100) {
     line(-wholeWidthNormed / 2 + i, 0, -wholeWidthNormed / 2 + i-meterInPixel / 100, -offsetGround);
   }
-
-
+  
+  
+  leftGoalX = -LROffsetNormed*2 - ballWidthNormed/2;
+  rightGoalX = LROffsetNormed*2 + ballWidthNormed/2;
+  float movement = 0 + t * speed;
+  if( movement <= leftGoalX || movement >= rightGoalX){
+    speed *= -1;
+    println(leftGoalX);
+    println(rightGoalX);
+    println(movement);
+    
+  }
   // Roter Ball in der Mitte
   fill(250, 131, 100);
-  ellipse(0 + t * speed, ballWidthNormed / 2 + groundThickness, ballWidthNormed, ballWidthNormed);
-
+  ellipse(movement, ballWidthNormed / 2 + groundThickness, ballWidthNormed, ballWidthNormed);
 
 
   // Ziellinien
   stroke(#ff0000);
   strokeWeight(5);
-  float distanceToPlank = 2;
+
+  
+
   // links
   line(-LROffsetNormed*2, -groundThickness, -LROffsetNormed*2 - ballWidthNormed, -groundThickness);
+  
   // rechts
   line(LROffsetNormed*2, -groundThickness, LROffsetNormed*2 + ballWidthNormed, -groundThickness);
-
 
 
   // Standfüße
@@ -102,8 +120,6 @@ void drawPlayField() {
   triangle(-fieldWidthNormed / 2 - lengthTriangleNormed / 2, groundThickness, -fieldWidthNormed / 2, groundThickness + triangleHeight, -fieldWidthNormed / 2 + lengthTriangleNormed / 2, groundThickness);
   // rechts
   triangle(fieldWidthNormed / 2 + lengthTriangleNormed / 2, groundThickness, fieldWidthNormed / 2, groundThickness + triangleHeight, fieldWidthNormed / 2 - lengthTriangleNormed / 2, groundThickness);
-
-
 
 
 
@@ -135,26 +151,26 @@ void drawPlayField() {
   curveVertex(fieldWidthNormed / 2 - plankLengthNormedHalf, groundThickness); // Endpunkt
   curveVertex(fieldWidthNormed / 2 - plankLengthNormedHalf, groundThickness);
   endShape();
-  
+
 
 
   /* Im folgenden Stelle ich eine lineare Gleichung zwischen dem Mittelpunkt der Planke und deren oberen Punkt auf
    * Mit deren Hilfe lassen sich auf dieser versetzt dynamisch Elemente platzieren
    * Die Dynamik soll voraussichtlich auch beim Biegen der Planke bestehen */
-   
+
   // Steigung der Planke m
-  float gradientPlankLeft = ((groundThickness + triangleHeight + plankThinkness) - (groundThickness + plankThinkness + lengthTriangleNormed * plankBendLeft)) / //<>//
-  ((-fieldWidthNormed / 2) - (-fieldWidthNormed / 2 - plankLengthNormedHalf));
+  float gradientPlankLeft = ((groundThickness + triangleHeight + plankThinkness) - (groundThickness + plankThinkness + lengthTriangleNormed * plankBendLeft)) /
+    ((-fieldWidthNormed / 2) - (-fieldWidthNormed / 2 - plankLengthNormedHalf));
   float gradientPlankRight = ((groundThickness + plankThinkness + lengthTriangleNormed * plankBendRight) - (groundThickness + triangleHeight + plankThinkness)) /
-  ((fieldWidthNormed / 2 + plankLengthNormedHalf) - fieldWidthNormed / 2);
+    ((fieldWidthNormed / 2 + plankLengthNormedHalf) - fieldWidthNormed / 2);
   // +b in der linearen Gleichung → y - m * x = b
   float plusBLeft = (groundThickness + triangleHeight + plankThinkness) - gradientPlankLeft * -fieldWidthNormed / 2;
   float plusBRight = (groundThickness + triangleHeight + plankThinkness) - gradientPlankRight * fieldWidthNormed / 2;
 
 
 
-  
-  
+
+
   /* TODO orthogonale Funktion berechnen
    * Außerdem ist bei allem Folgendem Refactoring nötig */
 
@@ -173,7 +189,7 @@ void drawPlayField() {
   float x3 = -fieldWidthNormed / 2 - plankLengthNormedHalf + triangleLongSideLength * 1.7;
   float y3 = gradientPlankLeft * x3 + plusBLeft + triangleShortSideLength;
   triangle(x1, y1, x2, y2, x3, y3);
-  
+
 
 
   // rechts
@@ -187,24 +203,25 @@ void drawPlayField() {
   triangle(x12, y12, x22, y22, x32, y32);
 
 
-  
+
   // Geschützbälle
   fill(#DFDFDF);
   stroke(0);
   strokeWeight(1);
-  float OffsetY = 13;
+  float ballOffsetY = 13;
 
   // links
-  ellipse(x1, y1+OffsetY, ballWidthNormed, ballWidthNormed);
+  ellipse(x1, y1+ballOffsetY, ballWidthNormed, ballWidthNormed);
   // rechts
-  ellipse(x12, y12+OffsetY, ballWidthNormed, ballWidthNormed);
-
-
-  popMatrix(); // TODO wo anders hin machen
-  
+  ellipse(x12, y12+ballOffsetY, ballWidthNormed, ballWidthNormed);
+  scale(1, -1); // Dreht die Szene wieder um, damit die Schrift korrekt dargestellt wird
   // Text in Bällen
   fill(#0000FF);
+  float textOffsetX = 4;
+  float textOffsetY = 8;
   textSize(meterInPixel * textSize / 2);
-  text("L", x1-2, y3+1);
-  text("R", x12-6, y32+1);
+  text("L", x1 - textOffsetX, (y1 + textOffsetY) * - 1);
+  text("R", x12 - textOffsetX, (y12 + textOffsetY) * -1);
+
+  popMatrix(); // TODO wo anders hin machen
 }
