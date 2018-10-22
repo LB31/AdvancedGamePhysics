@@ -1,8 +1,7 @@
-/*  //<>// //<>//
- * Leonid Barsht
+/* Leonid Barsht //<>//
  * s0553363
- * 04.10.2018
- */
+ * 18.10.2018 */
+ 
 
 float meterInPixel; // Stell dar, wie viele Pixel = 1 Meter; Maßstab M
 float offsetGround; // Der Abstand des Bodens vom unteren Bildschirmrand
@@ -32,10 +31,17 @@ float rightGoalX = Float.MAX_VALUE;
 float movement = 0; // Für den in jedem Frame berechneten X-Wert des roten Balls verantwortlich 
 float startPointBall = 0; // Start Position des roten Balls
 boolean movingDirection = false; // false = right; true = left
+// Bewegung Geschützbälle
+boolean leftIsFlying; // Ob der linke Ball fliegt
+boolean rightIsFlying; // Ob der rechte Ball fliegt
+float leftStartY; // Y Startposition linker Ball
+float rightStartY; // Y Startposition rechter Ball
+boolean startYSet; // Ob die Startpositionen bereits abgespeichtert wurden
+
 
 void setup() {
   //fullScreen();
-  size(1000, 600);
+  size(1200, 1000);
   background(255);
   frameRate(frameRate);
   smooth();
@@ -49,17 +55,25 @@ void setup() {
 // Draw - is the game loop
 void draw() {
   drawPlayField();
-  t += deltaTtimeLapse;
+  // Zeit vergeht nur, wenn einer der Bälle sich bewegt
+  if (leftIsFlying || rightIsFlying)
+    t += deltaTtimeLapse;
 }
 
-void mousePressed(){
+void mousePressed() {
   // Linker Button
-  if(mouseX < normValue(targetBallWidth*2) && mouseY < groundPosition && mouseY > groundPosition - normValue(targetBallWidth*2)){
-    println("Linker Ball");
+  if (mouseX < normValue(targetBallWidth*2) && mouseY < groundPosition && mouseY > groundPosition - normValue(targetBallWidth*2)) {
+    if (!leftIsFlying && !rightIsFlying) {
+      leftIsFlying = true;
+      println("Linker Ball");
+    }
   }
   // Rechter Button
-  if(mouseX > width - normValue(targetBallWidth*2) && mouseY < groundPosition && mouseY > groundPosition - normValue(targetBallWidth*2)){
-    println("Rechter Ball");
+  if (mouseX > width - normValue(targetBallWidth*2) && mouseY < groundPosition && mouseY > groundPosition - normValue(targetBallWidth*2)) {
+    if (!leftIsFlying && !rightIsFlying) {
+      rightIsFlying = true;
+      println("Rechter Ball");
+    }
   }
 }
 
@@ -78,7 +92,7 @@ void drawPlayField() {
   textSize(normValue(textSize));
   text("Treffer " + pointsLeft + ":" + pointsRight, width / 2.0f - textWidth, height / 3);
 
-  
+
   int groundThickness = 2; // Boden Dicke
 
   // Skalierte Werte
@@ -101,27 +115,27 @@ void drawPlayField() {
   for (float i = meterInPixel / 100; i <= width; i+=meterInPixel/100) {
     line(-wholeWidthNormed / 2 + i, 0, -wholeWidthNormed / 2 + i-meterInPixel / 100, -offsetGround);
   }
-  
-  
+
+
   /* Bei der Aufgabenstellung war mir leider nicht klar, ob der Ball nun permanent hin und her
-  * rollen, oder ob dieser beim Erreichen des ersten Ziels anhalten soll.
-  * Aktuell rollt dieser hin und her. Würde ich diesen anhalten wollen, könnte ich z.B.
-  * die Variable speed in der folgenden Bedigung auf 0 setzen */
+   * rollen, oder ob dieser beim Erreichen des ersten Ziels anhalten soll.
+   * Aktuell rollt dieser hin und her. Würde ich diesen anhalten wollen, könnte ich z.B.
+   * die Variable speed in der folgenden Bedigung auf 0 setzen */
   leftGoalX = -LROffsetNormed*2 - ballWidthNormed/2;
   rightGoalX = LROffsetNormed*2 + ballWidthNormed/2;
   movement = startPointBall + t * speed;
-  if( movement <= leftGoalX || movement >= rightGoalX){ // Wenn eine der roten Linien erreicht wurde
-      t = 0;
-      speed *= -1;
-    if(movingDirection){
+  if ( movement <= leftGoalX || movement >= rightGoalX) { // Wenn eine der roten Linien erreicht wurde
+    t = 0;
+    speed *= -1;
+    if (movingDirection) {
       startPointBall = leftGoalX; // Startposition auf aktuelle Position ändern
       movingDirection = !movingDirection; // Richtung umdrehen
-    }else{
+    } else {
       startPointBall = rightGoalX;
       movingDirection = !movingDirection;
     }
   }
-  
+
   // Roter Ball in der Mitte
   fill(250, 131, 100);
   ellipse(movement, ballWidthNormed / 2 + groundThickness, ballWidthNormed, ballWidthNormed);
@@ -229,30 +243,52 @@ void drawPlayField() {
   float y32 = gradientPlankRight * x32 + plusBRight + triangleShortSideLength;
   triangle(x12, y12, x22, y22, x32, y32);
 
-  float ballOffsetY = 13;
-  // Geschützball Kinematik
-  float v0 = 4.8; // Soll einem Meter entsprechen
-  float h0 = y2 / meterInPixel + 13 / meterInPixel; // TODO
-  float flyingY = -g * sq(t)/2 + v0 * t + h0;
-  println(normValue(flyingY));
+
+
+
+
   // Geschützbälle
   fill(#DFDFDF);
   stroke(0);
   strokeWeight(1);
+  
+  // Startpositionen abspeichern
+  if (!startYSet) {
+    startYSet = true;
+    leftStartY = y3;
+    rightStartY = y32;
+  }
 
   // links
-  ellipse(x1, normValue(flyingY), ballWidthNormed, ballWidthNormed);
+  ellipse(x1, calcBallFflight(y3, leftIsFlying), ballWidthNormed, ballWidthNormed);
   // rechts
-  ellipse(x12, y12+ballOffsetY, ballWidthNormed, ballWidthNormed);
+  ellipse(x12, calcBallFflight(y32, rightIsFlying), ballWidthNormed, ballWidthNormed);
   scale(1, -1); // Dreht die Szene wieder um, damit die Schrift korrekt dargestellt wird
   // Text in Bällen
   fill(#0000FF);
   float textOffsetX = 4;
   float textOffsetY = 8;
   textSize(normValue(textSize) / 2f);
-  text("L", x1 - textOffsetX, (y1 + textOffsetY) * - 1);
-  text("R", x12 - textOffsetX, (y12 + textOffsetY) * -1);
+  text("L", x1 - textOffsetX, (calcBallFflight(y1, leftIsFlying) + textOffsetY) * - 1);
+  text("R", x12 - textOffsetX, (calcBallFflight(y12, rightIsFlying) + textOffsetY) * -1);
 
 
-  popMatrix(); 
+  popMatrix();
+}
+
+// Geschützball Kinematik
+public float calcBallFflight(float startY, boolean flying) {
+  float v0 = 4.8; // Anfangsgeschwindigkeit
+  float h0 = startY / meterInPixel; // Setzt den bereits an das Spielfeld angepassten Wert auf die Größe im echten Leben zurück
+  float flyingY = normValue(-g * sq(t)/2 + v0 * t + h0); 
+  // Nach einer gewissen Zeit (um den Start zu übergehen), wenn wieder die Startposition erreicht wurde, wird alles zurückgesetzt
+  if (t > 0.2 && (flyingY <= leftStartY || flyingY <= rightStartY)) {
+    leftIsFlying = false;
+    rightIsFlying = false;
+    t = 0;
+  }
+  if (flying) {
+    return flyingY;
+  }
+  return startY;
 }
